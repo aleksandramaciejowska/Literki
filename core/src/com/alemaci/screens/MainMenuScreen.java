@@ -19,14 +19,13 @@ public class MainMenuScreen implements Screen {
 
     LettersGame game;
 
-    private Texture newGameButtonActive;
-    private Texture newGameButtonInactive;
-    private Texture gameRulesButtonActive;
-    private Texture gameRulesButtonInactive;
-    private Texture quitGameButtonActive;
-    private Texture quitGameButtonInactive;
-
-    private Texture title;
+    private final Texture newGameButtonActive;
+    private final Texture newGameButtonInactive;
+    private final Texture gameRulesButtonActive;
+    private final Texture gameRulesButtonInactive;
+    private final Texture quitGameButtonActive;
+    private final Texture quitGameButtonInactive;
+    private final Texture title;
 
     public MainMenuScreen (LettersGame game){
         this.game = game;
@@ -52,8 +51,7 @@ public class MainMenuScreen implements Screen {
         if(Gdx.input.getX() < x + BUTTON_WIDTH && Gdx.input.getX() > x && LettersGame.WINDOW_HEIGHT - Gdx.input.getY() < NEWGAME_BUTTON_Y + BUTTON_HEIGHT && LettersGame.WINDOW_HEIGHT - Gdx.input.getY() > NEWGAME_BUTTON_Y){
             game.batch.draw(newGameButtonActive,x,NEWGAME_BUTTON_Y,BUTTON_WIDTH,BUTTON_HEIGHT);
             if(Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)){
-                this.dispose();
-                game.setScreen(new MainGameScreen(game));
+                game.setScreen(game.currentGameScreen);
             }
         } else{
             game.batch.draw(newGameButtonInactive,x,NEWGAME_BUTTON_Y,BUTTON_WIDTH,BUTTON_HEIGHT);
@@ -62,9 +60,7 @@ public class MainMenuScreen implements Screen {
         if(Gdx.input.getX() < x + BUTTON_WIDTH && Gdx.input.getX() > x && LettersGame.WINDOW_HEIGHT - Gdx.input.getY() < RULES_BUTTON_Y + BUTTON_HEIGHT && LettersGame.WINDOW_HEIGHT - Gdx.input.getY() > RULES_BUTTON_Y){
             game.batch.draw(gameRulesButtonActive,x,RULES_BUTTON_Y,BUTTON_WIDTH,BUTTON_HEIGHT);
             if(Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)){
-                this.dispose();
-//                game.setScreen(new RulesScreen(game));
-//                game.setScreen(MainMenuScreen(game).resume());
+                game.setScreen(new RulesScreen(game, true));
             }
         } else{
             game.batch.draw(gameRulesButtonInactive,x,RULES_BUTTON_Y,BUTTON_WIDTH,BUTTON_HEIGHT);

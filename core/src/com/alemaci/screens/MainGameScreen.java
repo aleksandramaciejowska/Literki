@@ -2,14 +2,21 @@ package com.alemaci.screens;
 
 import com.alemaci.Letter;
 import com.alemaci.LettersGame;
+import com.alemaci.Word;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.utils.ScreenUtils;
 
 import javax.swing.*;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 public class MainGameScreen implements Screen {
@@ -21,22 +28,27 @@ public class MainGameScreen implements Screen {
     private static final int SWAP_BUTTON_X = LettersGame.WINDOW_WIDTH/2 - BUTTON_WIDTH/2;
     private static final int CHECK_BUTTON_X = LettersGame.WINDOW_WIDTH/2 + BUTTON_WIDTH/2 + 30;
 
-    private Texture background;
-    private Texture menuButtonActive;
-    private Texture menuButtonInactive;
-    private Texture swapButtonActive;
-    private Texture swapButtonInactive;
-    private Texture checkButtonActive;
-    private Texture checkButtonInactive;
+    private final Texture background;
+    private final Texture menuButtonActive;
+    private final Texture menuButtonInactive;
+    private final Texture swapButtonActive;
+    private final Texture swapButtonInactive;
+    private final Texture checkButtonActive;
+    private final Texture checkButtonInactive;
 
-    private ArrayList<Letter> letterBank;
-    private ArrayList<Letter> myLetters;
+    private final ArrayList<Letter> letterBank;
+    private final ArrayList<Letter> myLetters;
     public static ArrayList<GridPoint2> gridList;
+    public static ArrayList<String> dictionary;
+    public String[][] finishedBoard;
     public Letter selectedLetter;
+    public Word createdWord;
     private GridPoint2 lastMousePosition = new GridPoint2();
+    public static int startValueOfPosOnBoard = 1000;
+    private static int numberOfRows = BUTTON_Y / Letter.LETTER_HEIGHT;
+    private static int numberOfColumns = LettersGame.WINDOW_WIDTH / Letter.LETTER_WIDTH;
 
-    private JDialog window;
-    private JComboBox chooseLetter;
+    float totalTime = 0;
 
     LettersGame game;
 
@@ -59,6 +71,17 @@ public class MainGameScreen implements Screen {
 
         gridList = new ArrayList<>();
         createGrid();
+
+        finishedBoard = new String[numberOfRows][numberOfColumns];
+        game.horizontalWords = new ArrayList<>();
+        game.verticalWords = new ArrayList<>();
+
+        dictionary = new ArrayList<>();
+        try {
+            createDictionary();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -68,15 +91,25 @@ public class MainGameScreen implements Screen {
     public void render(float delta) {
         handleMouse();
 
+        float deltaTime = Gdx.graphics.getDeltaTime();
+        totalTime += deltaTime;
+        int minutes = ((int)totalTime)/60;
+        int seconds = ((int)totalTime)%60;
+
         ScreenUtils.clear(0.113f, 0.686f, 0.658f, 1);
         game.batch.begin();
         game.batch.draw(background, 0, 0, LettersGame.WINDOW_WIDTH, LettersGame.WINDOW_HEIGHT);
 
+        if(seconds < 10){
+            game.fontBlack.draw(game.batch,"Czas: " + minutes + ":0" + seconds, LettersGame.WINDOW_WIDTH - 175, LettersGame.WINDOW_HEIGHT - 50);
+        }else{
+            game.fontBlack.draw(game.batch,"Czas: " + minutes + ":" + seconds, LettersGame.WINDOW_WIDTH - 175, LettersGame.WINDOW_HEIGHT - 50);
+        }
+
         if(Gdx.input.getX() < MENU_BUTTON_X + BUTTON_WIDTH && Gdx.input.getX() > MENU_BUTTON_X && LettersGame.WINDOW_HEIGHT - Gdx.input.getY() < BUTTON_Y + BUTTON_HEIGHT && LettersGame.WINDOW_HEIGHT - Gdx.input.getY() > BUTTON_Y){
             game.batch.draw(menuButtonActive,MENU_BUTTON_X,BUTTON_Y,BUTTON_WIDTH,BUTTON_HEIGHT);
             if(Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)){
-                this.dispose();
-                game.setScreen(new MainMenuScreen(game));
+                game.setScreen(new DuringGameMenuScreen(game));
             }
         } else{
             game.batch.draw(menuButtonInactive,MENU_BUTTON_X,BUTTON_Y,BUTTON_WIDTH,BUTTON_HEIGHT);
@@ -94,8 +127,8 @@ public class MainGameScreen implements Screen {
         if(Gdx.input.getX() < CHECK_BUTTON_X + BUTTON_WIDTH && Gdx.input.getX() > CHECK_BUTTON_X && LettersGame.WINDOW_HEIGHT - Gdx.input.getY() < BUTTON_Y + BUTTON_HEIGHT && LettersGame.WINDOW_HEIGHT - Gdx.input.getY() > BUTTON_Y){
             game.batch.draw(checkButtonActive,CHECK_BUTTON_X,BUTTON_Y,BUTTON_WIDTH,BUTTON_HEIGHT);
             if(Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)){
-                this.dispose();
-                game.setScreen(new MainGameScreen(game));
+                checkCrossword();
+                game.setScreen(new SummaryScreen(game));
             }
         } else{
             game.batch.draw(checkButtonInactive,CHECK_BUTTON_X,BUTTON_Y,BUTTON_WIDTH,BUTTON_HEIGHT);
@@ -161,12 +194,12 @@ public class MainGameScreen implements Screen {
                 lastMousePosition.set(mousePosition);
             }
         } else if (selectedLetter != null) {
-                selectedLetter.snapToGrid(selectedLetter.whichCell(mousePosition));
-                myLetters.add(selectedLetter);
-                selectedLetter = null;
+            selectedLetter.snapToGrid(selectedLetter.whichCell(mousePosition));
+            selectedLetter.changePositionOnBoard(finishedBoard);
+            myLetters.add(selectedLetter);
+            selectedLetter = null;
         }
     }
-
 
     private void fillLetterBank(ArrayList<Letter> letterBank){
         for(int i=0;i<13;i++){
@@ -233,7 +266,7 @@ public class MainGameScreen implements Screen {
 
     private Letter createLetter(String value){
         GridPoint2 positionOnScreen = randomizeLettersPosition();
-        String imgName = new String();
+        String imgName = "";
         if(value.equals("ą")) imgName = "A1.png";
         else if(value.equals("ć")) imgName = "C1.png";
         else if(value.equals("ę")) imgName = "E1.png";
@@ -245,7 +278,9 @@ public class MainGameScreen implements Screen {
         else if(value.equals("ż")) imgName = "Z2.png";
         else imgName = value.toUpperCase(Locale.ROOT) + ".png";
         Texture letterImg = new Texture(imgName);
-        Letter letter = new Letter(value, letterImg, positionOnScreen);
+        int rowOnBoard = startValueOfPosOnBoard;
+        int columnOnBoard = startValueOfPosOnBoard;
+        Letter letter = new Letter(value, letterImg, positionOnScreen, rowOnBoard, columnOnBoard);
         return letter;
     }
 
@@ -282,8 +317,6 @@ public class MainGameScreen implements Screen {
     }
 
     private void createGrid(){
-        int numberOfRows = (int)(BUTTON_Y / Letter.LETTER_HEIGHT);
-        int numberOfColumns = (int)(LettersGame.WINDOW_WIDTH / Letter.LETTER_WIDTH);
         for (int row = 0; row < numberOfRows; row++) {
             for (int col = 0; col < numberOfColumns; col++) {
                 GridPoint2 cellPosition = new GridPoint2(col * Letter.LETTER_WIDTH,(numberOfRows - 1 - row) * Letter.LETTER_HEIGHT);
@@ -293,12 +326,11 @@ public class MainGameScreen implements Screen {
     }
 
     private void swapLetters(){
+        sortLetters(myLetters);
+
         ArrayList<String> letterValues = new ArrayList<>();
 
-        ListIterator<Letter> listIterator1 = myLetters.listIterator();
-
-        while (listIterator1.hasNext()) {
-            Letter letter = listIterator1.next();
+        for (Letter letter : myLetters) {
             String value = letter.value;
             letterValues.add(value);
         }
@@ -308,10 +340,8 @@ public class MainGameScreen implements Screen {
 
         Letter chosenLetter = null;
         int i = 0;
-        ListIterator<Letter> listIterator2 = myLetters.listIterator();
-        while (listIterator2.hasNext()) {
-            Letter letter = listIterator2.next();
-            if (letter.value.equals(choice)){
+        for (Letter letter : myLetters) {
+            if (letter.value.equals(choice)) {
                 chosenLetter = letter;
                 break;
             }
@@ -325,5 +355,93 @@ public class MainGameScreen implements Screen {
         randomizeMyLetters(3);
     }
 
-}
+    private void checkCrossword(){
+        createWords();
 
+        for (Word word : game.horizontalWords) {
+            word.checkDictionary();
+        }
+        for (Word word : game.verticalWords) {
+            word.checkDictionary();
+        }
+
+    }
+
+    private void createWords(){
+        String wordValueHorizontal = "";
+        String wordValueVertical = "";
+        int startRow = 0;
+        int startCol = 0;
+        int endRow = 0;
+        int endCol = 0;
+
+        //horizontal words
+        for (int row = 0; row < numberOfRows; row++) {
+            wordValueHorizontal = "";
+            for (int col = 0; col < numberOfColumns; col++) {
+                if(finishedBoard[row][col] != null){
+                    wordValueHorizontal += finishedBoard[row][col];
+
+                    if(col == 0 || finishedBoard[row][col-1] == null){
+                        startRow=row;
+                        startCol=col;
+                    }
+
+                    if(col == numberOfColumns-1 || finishedBoard[row][col+1] == null){
+                        if(wordValueHorizontal.length() > 1) {
+                            endRow=row;
+                            endCol=col;
+                            createdWord = new Word(wordValueHorizontal,false, startCol, startRow, endCol, endRow);
+                            game.horizontalWords.add(createdWord);
+                            wordValueHorizontal = "";
+                        } else{
+                            wordValueHorizontal = "";
+                        }
+                    }
+                }
+            }
+        }
+
+        //vertical words
+        for (int col = 0; col < numberOfColumns; col++) {
+            wordValueVertical = "";
+            for (int row = numberOfRows-1; row >= 0; row--) {
+                if(finishedBoard[row][col] != null){
+                    wordValueVertical += finishedBoard[row][col];
+
+                    if(row == numberOfRows-1 || finishedBoard[row+1][col] == null){
+                        startRow=row;
+                        startCol=col;
+                    }
+
+                    if(row == 0 || finishedBoard[row-1][col] == null){
+                        if(wordValueVertical.length() > 1){
+                            endRow=row;
+                            endCol=col;
+                            createdWord = new Word(wordValueVertical,false, startCol, startRow, endCol, endRow);
+                            game.verticalWords.add(createdWord);
+                            wordValueVertical = "";
+                        } else{
+                            wordValueVertical = "";
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public void createDictionary() throws IOException {
+        Path path = Paths.get("slowa.txt");
+
+        try (BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)){
+            String line;
+            while ((line = reader.readLine()) != null) {
+                dictionary.add(line);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+}
