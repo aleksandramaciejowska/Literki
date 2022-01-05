@@ -6,12 +6,9 @@ import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
-import com.badlogic.gdx.files.FileHandle;
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
-import java.io.IOException;
 import java.util.ArrayList;
 
 public class LettersGame extends Game implements ApplicationListener {
@@ -26,9 +23,11 @@ public class LettersGame extends Game implements ApplicationListener {
 	public Screen currentGameScreen;
 	public Screen mainMenu;
 
-	public ArrayList<com.alemaci.Word> horizontalWords;
-	public ArrayList<com.alemaci.Word> verticalWords;
-	
+	public ArrayList<com.alemaci.gameobjects.Word> horizontalWords;
+	public ArrayList<com.alemaci.gameobjects.Word> verticalWords;
+
+	public String time;
+
 	@Override
 	public void create () {
 		batch = new SpriteBatch();
@@ -38,6 +37,8 @@ public class LettersGame extends Game implements ApplicationListener {
 
 		horizontalWords = new ArrayList<>();
 		verticalWords = new ArrayList<>();
+
+		time = "";
 
 		mainMenu = new MainMenuScreen(this);
 		currentGameScreen = new MainGameScreen(this);

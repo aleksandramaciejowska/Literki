@@ -1,12 +1,11 @@
 package com.alemaci.screens;
 
-import com.alemaci.Letter;
+import com.alemaci.gameobjects.Letter;
 import com.alemaci.LettersGame;
-import com.alemaci.Word;
+import com.alemaci.gameobjects.Word;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
-import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.utils.ScreenUtils;
@@ -40,6 +39,7 @@ public class MainGameScreen implements Screen {
     private final ArrayList<Letter> myLetters;
     public static ArrayList<GridPoint2> gridList;
     public static ArrayList<String> dictionary;
+    public static ArrayList<GridPoint2> occupiedGridPositions;
     public String[][] finishedBoard;
     public Letter selectedLetter;
     public Word createdWord;
@@ -47,6 +47,7 @@ public class MainGameScreen implements Screen {
     public static int startValueOfPosOnBoard = 1000;
     private static int numberOfRows = BUTTON_Y / Letter.LETTER_HEIGHT;
     private static int numberOfColumns = LettersGame.WINDOW_WIDTH / Letter.LETTER_WIDTH;
+    int firstRun = 2;
 
     float totalTime = 0;
 
@@ -62,6 +63,8 @@ public class MainGameScreen implements Screen {
         checkButtonActive = new Texture("buttonSprawdz1.png");
         checkButtonInactive = new Texture("buttonSprawdz.png");
         background = new Texture("grid50.png");
+
+        occupiedGridPositions = new ArrayList<>();
 
         letterBank = new ArrayList<>();
         fillLetterBank(letterBank);
@@ -101,10 +104,11 @@ public class MainGameScreen implements Screen {
         game.batch.draw(background, 0, 0, LettersGame.WINDOW_WIDTH, LettersGame.WINDOW_HEIGHT);
 
         if(seconds < 10){
-            game.fontBlack.draw(game.batch,"Czas: " + minutes + ":0" + seconds, LettersGame.WINDOW_WIDTH - 175, LettersGame.WINDOW_HEIGHT - 50);
+            game.time = minutes + ":0" + seconds;
         }else{
-            game.fontBlack.draw(game.batch,"Czas: " + minutes + ":" + seconds, LettersGame.WINDOW_WIDTH - 175, LettersGame.WINDOW_HEIGHT - 50);
+            game.time = minutes + ":" + seconds;
         }
+        game.fontBlack.draw(game.batch,"Czas: " + game.time, LettersGame.WINDOW_WIDTH - 175, LettersGame.WINDOW_HEIGHT - 50);
 
         if(Gdx.input.getX() < MENU_BUTTON_X + BUTTON_WIDTH && Gdx.input.getX() > MENU_BUTTON_X && LettersGame.WINDOW_HEIGHT - Gdx.input.getY() < BUTTON_Y + BUTTON_HEIGHT && LettersGame.WINDOW_HEIGHT - Gdx.input.getY() > BUTTON_Y){
             game.batch.draw(menuButtonActive,MENU_BUTTON_X,BUTTON_Y,BUTTON_WIDTH,BUTTON_HEIGHT);
@@ -128,7 +132,6 @@ public class MainGameScreen implements Screen {
             game.batch.draw(checkButtonActive,CHECK_BUTTON_X,BUTTON_Y,BUTTON_WIDTH,BUTTON_HEIGHT);
             if(Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)){
                 checkCrossword();
-                game.setScreen(new SummaryScreen(game));
             }
         } else{
             game.batch.draw(checkButtonInactive,CHECK_BUTTON_X,BUTTON_Y,BUTTON_WIDTH,BUTTON_HEIGHT);
@@ -139,6 +142,12 @@ public class MainGameScreen implements Screen {
         }
         if (selectedLetter != null) {
             selectedLetter.drawLetter(game.batch);
+        }
+
+        if(firstRun==2) firstRun--;
+        else if(firstRun==1){
+            JOptionPane.showMessageDialog(null, "Pierwszą literę możesz ułożyć w dowolnym miejscu. \nKolejne litery dokładaj do już ułożonych liter.","Zanim zaczniesz",JOptionPane.INFORMATION_MESSAGE);
+            firstRun--;
         }
 
         game.batch.end();
@@ -181,6 +190,7 @@ public class MainGameScreen implements Screen {
 
                 if (letter.isMouseIn(mousePosition)) {
                     selectedLetter = letter;
+                    occupiedGridPositions.remove(selectedLetter.positionOnScreen);
                     listIterator.remove();
                     break;
                 }
@@ -195,7 +205,18 @@ public class MainGameScreen implements Screen {
             }
         } else if (selectedLetter != null) {
             selectedLetter.snapToGrid(selectedLetter.whichCell(mousePosition));
-            selectedLetter.changePositionOnBoard(finishedBoard);
+            if(occupiedGridPositions.contains(selectedLetter.positionOnScreen)){
+                selectedLetter.setPositionOnScreen(mousePosition);
+            } else if(mousePosition.x<1000) {
+                selectedLetter.changePositionOnBoard(finishedBoard);
+                if(isConnectionOnBoard(selectedLetter) || occupiedGridPositions.isEmpty()){
+                    occupiedGridPositions.add(selectedLetter.positionOnScreen);
+                } else{
+                    selectedLetter.setPositionOnScreen(mousePosition);
+                }
+            } else{
+                selectedLetter.setPositionOnScreen(randomizeLettersPosition());
+            }
             myLetters.add(selectedLetter);
             selectedLetter = null;
         }
@@ -325,6 +346,39 @@ public class MainGameScreen implements Screen {
         }
     }
 
+    public boolean isConnectionOnBoard(Letter letter){
+        int row = letter.positionOnScreen.y/Letter.LETTER_HEIGHT;
+        int col = letter.positionOnScreen.x/Letter.LETTER_WIDTH;
+
+        if(row==0){
+            if(finishedBoard[row][col-1]!=null ||
+                    finishedBoard[row][col+1]!=null ||
+                    finishedBoard[row+1][col]!=null) return true;
+            else return false;
+        }else if(row==numberOfRows-1){
+            if(finishedBoard[row][col-1]!=null ||
+                    finishedBoard[row][col+1]!=null ||
+                    finishedBoard[row-1][col]!=null) return true;
+            else return false;
+        }else if(col==0){
+            if(finishedBoard[row][col+1]!=null ||
+                    finishedBoard[row+1][col]!=null ||
+                    finishedBoard[row-1][col]!=null) return true;
+            else return false;
+        }else if(col==numberOfColumns-1){
+            if(finishedBoard[row][col-1]!=null ||
+                    finishedBoard[row+1][col]!=null ||
+                    finishedBoard[row-1][col]!=null) return true;
+            else return false;
+        }else{
+            if(finishedBoard[row][col-1]!=null ||
+                    finishedBoard[row][col+1]!=null ||
+                    finishedBoard[row+1][col]!=null ||
+                    finishedBoard[row-1][col]!=null) return true;
+            else return false;
+        }
+    }
+
     private void swapLetters(){
         sortLetters(myLetters);
 
@@ -338,31 +392,45 @@ public class MainGameScreen implements Screen {
 
         String choice = (String)JOptionPane.showInputDialog(null, "Którą literę chcesz wymienić?", "Wymiana litery", JOptionPane.QUESTION_MESSAGE, null, chooseLetter, chooseLetter[0]);
 
-        Letter chosenLetter = null;
-        int i = 0;
-        for (Letter letter : myLetters) {
-            if (letter.value.equals(choice)) {
-                chosenLetter = letter;
-                break;
+        if(choice != null && letterBank.size()>=2){
+            Letter chosenLetter = null;
+            int i = 0;
+            for (Letter letter : myLetters) {
+                if (letter.value.equals(choice)) {
+                    chosenLetter = letter;
+                    break;
+                }
+                i++;
             }
-            i++;
+
+            if(chosenLetter.rowOnBoard!=startValueOfPosOnBoard&&chosenLetter.columnOnBoard!=startValueOfPosOnBoard)
+            finishedBoard[chosenLetter.rowOnBoard][chosenLetter.columnOnBoard]=null;
+
+            myLetters.remove(i);
+            letterBank.add(chosenLetter);
+            sortLetters(letterBank);
+
+            randomizeMyLetters(3);
+        }else{
+            JOptionPane.showMessageDialog(null, "W banku liter nie ma już wystarczającej liczby liter.","Nie można wymienić liter",JOptionPane.ERROR_MESSAGE);
         }
-
-        myLetters.remove(i);
-        letterBank.add(chosenLetter);
-        sortLetters(letterBank);
-
-        randomizeMyLetters(3);
     }
 
     private void checkCrossword(){
-        createWords();
+        if(occupiedGridPositions.size() == myLetters.size()){
+            createWords();
 
-        for (Word word : game.horizontalWords) {
-            word.checkDictionary();
-        }
-        for (Word word : game.verticalWords) {
-            word.checkDictionary();
+            for (Word word : game.horizontalWords) {
+                word.checkDictionary();
+            }
+            for (Word word : game.verticalWords) {
+                word.checkDictionary();
+            }
+
+            game.setScreen(new SummaryScreen(game));
+
+        }else{
+            JOptionPane.showMessageDialog(null, "Ułóż wszystkie literki!","To jeszcze nie koniec",JOptionPane.INFORMATION_MESSAGE);
         }
 
     }
@@ -370,33 +438,20 @@ public class MainGameScreen implements Screen {
     private void createWords(){
         String wordValueHorizontal = "";
         String wordValueVertical = "";
-        int startRow = 0;
-        int startCol = 0;
-        int endRow = 0;
-        int endCol = 0;
 
         //horizontal words
         for (int row = 0; row < numberOfRows; row++) {
-            wordValueHorizontal = "";
             for (int col = 0; col < numberOfColumns; col++) {
                 if(finishedBoard[row][col] != null){
+                    if((col == 0 && finishedBoard[row][col+1] == null) || (finishedBoard[row][col-1] == null && finishedBoard[row][col+1] == null) || (finishedBoard[row][col-1] == null && col == numberOfColumns-1))
+                        continue;
+
                     wordValueHorizontal += finishedBoard[row][col];
 
-                    if(col == 0 || finishedBoard[row][col-1] == null){
-                        startRow=row;
-                        startCol=col;
-                    }
-
                     if(col == numberOfColumns-1 || finishedBoard[row][col+1] == null){
-                        if(wordValueHorizontal.length() > 1) {
-                            endRow=row;
-                            endCol=col;
-                            createdWord = new Word(wordValueHorizontal,false, startCol, startRow, endCol, endRow);
-                            game.horizontalWords.add(createdWord);
-                            wordValueHorizontal = "";
-                        } else{
-                            wordValueHorizontal = "";
-                        }
+                        createdWord = new Word(wordValueHorizontal,false);
+                        game.horizontalWords.add(createdWord);
+                        wordValueHorizontal = "";
                     }
                 }
             }
@@ -404,26 +459,18 @@ public class MainGameScreen implements Screen {
 
         //vertical words
         for (int col = 0; col < numberOfColumns; col++) {
-            wordValueVertical = "";
             for (int row = numberOfRows-1; row >= 0; row--) {
                 if(finishedBoard[row][col] != null){
+                    if((row == numberOfRows-1 && finishedBoard[row-1][col] == null) || (finishedBoard[row+1][col] == null && finishedBoard[row-1][col] == null) || (finishedBoard[row+1][col] == null && row == 0))
+                        continue;
+
                     wordValueVertical += finishedBoard[row][col];
 
-                    if(row == numberOfRows-1 || finishedBoard[row+1][col] == null){
-                        startRow=row;
-                        startCol=col;
-                    }
 
                     if(row == 0 || finishedBoard[row-1][col] == null){
-                        if(wordValueVertical.length() > 1){
-                            endRow=row;
-                            endCol=col;
-                            createdWord = new Word(wordValueVertical,false, startCol, startRow, endCol, endRow);
-                            game.verticalWords.add(createdWord);
-                            wordValueVertical = "";
-                        } else{
-                            wordValueVertical = "";
-                        }
+                        createdWord = new Word(wordValueVertical,false);
+                        game.verticalWords.add(createdWord);
+                        wordValueVertical = "";
                     }
                 }
             }
@@ -442,6 +489,5 @@ public class MainGameScreen implements Screen {
             e.printStackTrace();
         }
     }
-
 
 }

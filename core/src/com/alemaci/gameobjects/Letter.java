@@ -1,4 +1,4 @@
-package com.alemaci;
+package com.alemaci.gameobjects;
 
 import com.alemaci.screens.MainGameScreen;
 import com.badlogic.gdx.graphics.Texture;
@@ -74,5 +74,9 @@ public class Letter {
         rowOnBoard = positionOnScreen.y/Letter.LETTER_HEIGHT;
         columnOnBoard = positionOnScreen.x/Letter.LETTER_WIDTH;
         finishedBoard[rowOnBoard][columnOnBoard] = value;
+    }
+
+    public void setPositionOnScreen(GridPoint2 pos){
+        positionOnScreen = pos;
     }
 }

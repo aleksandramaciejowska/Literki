@@ -1,7 +1,7 @@
 package com.alemaci.screens;
 
 import com.alemaci.LettersGame;
-import com.alemaci.Word;
+import com.alemaci.gameobjects.Word;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
@@ -48,6 +48,8 @@ public class SummaryScreen implements Screen {
     public void render(float delta) {
         ScreenUtils.clear(0.113f, 0.686f, 0.658f, 1);
         game.batch.begin();
+
+        game.fontBlack.draw(game.batch,"Czas gry: " + game.time, LettersGame.WINDOW_WIDTH - 230, 100);
 
         game.fontBlack.draw(game.batch,"Słowa ułożone poziomo:", firstLine1.x, firstLine1.y+50);
         writeWords(game.horizontalWords, firstLine1);
