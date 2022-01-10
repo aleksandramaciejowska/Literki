@@ -11,6 +11,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
 import java.util.ArrayList;
 
+/** Main game class */
 public class LettersGame extends Game implements ApplicationListener {
 
 	public static final int WINDOW_WIDTH = 1024;
@@ -23,7 +24,9 @@ public class LettersGame extends Game implements ApplicationListener {
 	public Screen currentGameScreen;
 	public Screen mainMenu;
 
+	/**ArrayList of words stacked horizontally*/
 	public ArrayList<com.alemaci.gameobjects.Word> horizontalWords;
+	/**ArrayList of words stacked vertically*/
 	public ArrayList<com.alemaci.gameobjects.Word> verticalWords;
 
 	public String time;

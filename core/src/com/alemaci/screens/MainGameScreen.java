@@ -18,6 +18,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
+/**Screen of the main game*/
 public class MainGameScreen implements Screen {
 
     private static final int BUTTON_WIDTH = 175;
@@ -35,15 +36,19 @@ public class MainGameScreen implements Screen {
     private final Texture checkButtonActive;
     private final Texture checkButtonInactive;
 
+    /**List of all letters possible to draw*/
     private final ArrayList<Letter> letterBank;
+    /**List of drawn letters*/
     private final ArrayList<Letter> myLetters;
     public static ArrayList<GridPoint2> gridList;
     public static ArrayList<String> dictionary;
     public static ArrayList<GridPoint2> occupiedGridPositions;
+    /**Array of finished game board containing single letter strings. [0][0] is bottom left corner of the board.*/
     public String[][] finishedBoard;
     public Letter selectedLetter;
     public Word createdWord;
     private GridPoint2 lastMousePosition = new GridPoint2();
+    /**Start value of letter position on board*/
     public static int startValueOfPosOnBoard = 1000;
     private static int numberOfRows = BUTTON_Y / Letter.LETTER_HEIGHT;
     private static int numberOfColumns = LettersGame.WINDOW_WIDTH / Letter.LETTER_WIDTH;
@@ -179,6 +184,7 @@ public class MainGameScreen implements Screen {
         background.dispose();
     }
 
+    /**Method responsible for listening mouse actions*/
     private void handleMouse(){
         GridPoint2 mousePosition = getMousePosMappedToScreenPos();
 
@@ -222,6 +228,7 @@ public class MainGameScreen implements Screen {
         }
     }
 
+    /**Creates Letter class objects and filling letterBank ArrayList*/
     private void fillLetterBank(ArrayList<Letter> letterBank){
         for(int i=0;i<13;i++){
             letterBank.add(createLetter("a"));
@@ -277,14 +284,25 @@ public class MainGameScreen implements Screen {
         sortLetters(letterBank);
     }
 
+    /**
+     * @param maxValue the maximum value of drawing range
+     * @return Returns a random Int within the given range
+     */
     private int randomIntMax(int maxValue) {
         return (int) (Math.random() * (maxValue + 1));
     }
 
+    /**
+     * @return Returns random letter position
+     */
     private GridPoint2 randomizeLettersPosition(){
         return new GridPoint2(randomIntMax(LettersGame.WINDOW_WIDTH - Letter.LETTER_WIDTH), randomIntMax(BUTTON_Y - Letter.LETTER_HEIGHT));
     }
 
+    /**
+     * Creates Letter object on the basis of letter string
+     * @param value String of created letter
+     */
     private Letter createLetter(String value){
         GridPoint2 positionOnScreen = randomizeLettersPosition();
         String imgName = "";
@@ -305,6 +323,7 @@ public class MainGameScreen implements Screen {
         return letter;
     }
 
+    /**Draws given number of Letters from letterBank*/
     private void randomizeMyLetters(int howManyLetters){
         for(int i=0;i<howManyLetters;i++){
             int x = randomIntMax(letterBank.size()-1-i);
@@ -314,6 +333,7 @@ public class MainGameScreen implements Screen {
         sortLetters(myLetters);
     }
 
+    /**Sorting letters in ArrayList alphabetically*/
     private void sortLetters(ArrayList list){
         Comparator<Letter> compareByValue = new Comparator<Letter>() {
             @Override
@@ -325,10 +345,14 @@ public class MainGameScreen implements Screen {
         Collections.sort(list, compareByValue);
     }
 
+    /**Mapping mouse position (from (0,0) in the upper left corner to the lower left corner
+     * @return Mapped mouse position
+     */
     private GridPoint2 getMousePosMappedToScreenPos() {
         return new GridPoint2(Gdx.input.getX(), LettersGame.WINDOW_HEIGHT - 1 - Gdx.input.getY());
     }
 
+    /**Checks if mouse is inside the game window*/
     private boolean isMouseInsideGameWindow() {
         GridPoint2 mousePosition = getMousePosMappedToScreenPos();
         return mousePosition.x >= 0 &&
@@ -337,6 +361,7 @@ public class MainGameScreen implements Screen {
                 mousePosition.y < LettersGame.WINDOW_HEIGHT;
     }
 
+    /**Creates ArrayList of positions of each cell in the grid*/
     private void createGrid(){
         for (int row = 0; row < numberOfRows; row++) {
             for (int col = 0; col < numberOfColumns; col++) {
@@ -346,6 +371,7 @@ public class MainGameScreen implements Screen {
         }
     }
 
+    /**@return Returns true when letter is placed in the neighbourhood of another letter*/
     public boolean isConnectionOnBoard(Letter letter){
         int row = letter.positionOnScreen.y/Letter.LETTER_HEIGHT;
         int col = letter.positionOnScreen.x/Letter.LETTER_WIDTH;
@@ -379,6 +405,7 @@ public class MainGameScreen implements Screen {
         }
     }
 
+    /**Method called to swap one letter with another three from the letterBank*/
     private void swapLetters(){
         sortLetters(myLetters);
 
@@ -416,6 +443,7 @@ public class MainGameScreen implements Screen {
         }
     }
 
+    /**Method called to check the correctness of the arranged words*/
     private void checkCrossword(){
         if(occupiedGridPositions.size() == myLetters.size()){
             createWords();
@@ -435,6 +463,7 @@ public class MainGameScreen implements Screen {
 
     }
 
+    /**Creates words from stacked in finishedBoard letters*/
     private void createWords(){
         String wordValueHorizontal = "";
         String wordValueVertical = "";
@@ -477,6 +506,7 @@ public class MainGameScreen implements Screen {
         }
     }
 
+    /**Creates dictionary ArrayList from official dictionary file*/
     public void createDictionary() throws IOException {
         Path path = Paths.get("slowa.txt");
 

@@ -17,6 +17,13 @@ public class Letter {
     public static final int LETTER_WIDTH = 50;
     public static final int LETTER_HEIGHT = 50;
 
+    /**Object defining a single letter
+     * @param value String containing specified letter
+     * @param letterImg Texture of letter
+     * @param positionOnScreen Position on screen as two coordinates in pixels
+     * @param rowOnBoard Vertical position on game board counted from bottom left corner
+     * @param columnOnBoard Horizontal position on game board counted from bottom left corner
+     */
     public Letter(String value, Texture letterImg, GridPoint2 positionOnScreen, int rowOnBoard, int columnOnBoard){
         this.value = value;
         this.letterImg = letterImg;
@@ -45,6 +52,7 @@ public class Letter {
         positionOnScreen.y += y;
     }
 
+    /**Returns position of the cell where letter is placed*/
     public GridPoint2 whichCell(GridPoint2 dropPosition){
         GridPoint2 foundCellPosition = new GridPoint2();
         ListIterator<GridPoint2> listIterator = MainGameScreen.gridList.listIterator();
@@ -67,6 +75,7 @@ public class Letter {
 
     }
 
+    /**Fills specified position in finishedBoard when letter is moved*/
     public void changePositionOnBoard(String finishedBoard[][]){
         if(rowOnBoard!=MainGameScreen.startValueOfPosOnBoard && columnOnBoard!=MainGameScreen.startValueOfPosOnBoard){
             finishedBoard[rowOnBoard][columnOnBoard] = null;

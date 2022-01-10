@@ -7,6 +7,7 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.utils.ScreenUtils;
 
+/**Screen with an explanation of the rules of the game*/
 public class RulesScreen implements Screen {
 
     private static final int BUTTON_WIDTH = 280;

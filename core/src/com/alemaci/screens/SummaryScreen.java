@@ -11,6 +11,7 @@ import com.badlogic.gdx.utils.ScreenUtils;
 
 import java.util.ArrayList;
 
+/**Screen shown at the end of the game, displaying all the created words checked with dictionary*/
 public class SummaryScreen implements Screen {
 
     private static final int BUTTON_WIDTH = 175;

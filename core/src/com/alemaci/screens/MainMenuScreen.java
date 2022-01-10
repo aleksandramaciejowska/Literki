@@ -7,6 +7,7 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.utils.ScreenUtils;
 
+/**Main menu from which you can start a new game, go to the rules screen or leave game*/
 public class MainMenuScreen implements Screen {
 
     private static final int BUTTON_WIDTH = 280;
