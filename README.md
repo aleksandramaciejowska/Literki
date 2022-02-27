@@ -19,4 +19,15 @@ The project is created with:
 The purpose of the game is to arrange the drawn letters (21 at the beginning) into a crossword built from words included in a Polish dictionary. Player can swap any mismatched letter, but instead they receive 3 new letters from a letter bank. Every letter must be in a crossword to finish the game and if any of created words doesn't exist, the player is informed about it and allowed to go back to game and do a correction.
 
 ## How the game works
-#### [Game film presentation on YT](https://youtu.be/Kkjz5K5syYM)
+#### [Game presentation on YT](https://youtu.be/Kkjz5K5syYM)
+
+### Main menu:
+![Main menu](readme-files/menu.jpg)
+### During game:
+![During game](readme-files/main-game.jpg)
+### End of the game - there is a non-existing word:
+When there is a word that doesn't exist, the text at the bottom will encourage the player to correct it - wrong word will be displayed in red.
+![End - wrong words](readme-files/end-wrong-word.jpg)
+### End of the game - the whole crossword is correct:
+When the crossword is correct, the text at the bottom will congratulate and suggest to try a new game.
+![End - correct crossword](readme-files/end-correct.jpg)
